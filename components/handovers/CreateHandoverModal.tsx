@@ -2,6 +2,7 @@
 
 import { useState, useActionState, useEffect, useRef } from "react";
 import { createHandoverAction, type HandoverActionState } from "@/app/handovers/actions";
+import { compressImage } from "@/lib/image-compression";
 
 interface SiteOption {
   id: string;
@@ -25,6 +26,8 @@ export function CreateHandoverModal({
   );
   const [fileName, setFileName] = useState<string>("");
   const [selectedSource, setSelectedSource] = useState<"camera" | "gallery" | null>(null);
+  const [compressedFile, setCompressedFile] = useState<File | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
@@ -39,16 +42,29 @@ export function CreateHandoverModal({
       setIsOpen(false);
       setFileName("");
       setSelectedSource(null);
+      setCompressedFile(null);
       if (cameraRef.current) cameraRef.current.value = "";
       if (galleryRef.current) galleryRef.current.value = "";
     }
   }, [state?.success]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, source: "camera" | "gallery") => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    source: "camera" | "gallery",
+  ) => {
+    const rawFile = e.target.files?.[0];
+    if (rawFile) {
+      setFileName(rawFile.name);
       setSelectedSource(source);
+      setIsCompressing(true);
+      try {
+        const file = await compressImage(rawFile);
+        setCompressedFile(file);
+      } catch {
+        setCompressedFile(rawFile);
+      } finally {
+        setIsCompressing(false);
+      }
       if (source === "camera" && galleryRef.current) {
         galleryRef.current.value = "";
       } else if (source === "gallery" && cameraRef.current) {
@@ -60,8 +76,18 @@ export function CreateHandoverModal({
   const handleRemovePhoto = () => {
     setFileName("");
     setSelectedSource(null);
+    setCompressedFile(null);
     if (cameraRef.current) cameraRef.current.value = "";
     if (galleryRef.current) galleryRef.current.value = "";
+  };
+
+  const handleSubmitForm = (formData: FormData) => {
+    if (compressedFile) {
+      formData.set("photo", compressedFile);
+    } else {
+      formData.delete("photo");
+    }
+    formAction(formData);
   };
 
   return (
@@ -107,7 +133,7 @@ export function CreateHandoverModal({
               </div>
             )}
 
-            <form action={formAction} className="mt-4 space-y-4">
+            <form action={handleSubmitForm} className="mt-4 space-y-4">
               <div>
                 <label
                   htmlFor="site_id"
@@ -181,14 +207,22 @@ export function CreateHandoverModal({
                   <div className="flex items-center justify-between p-2.5 rounded-lg border border-blue-200 bg-blue-50/40">
                     <div className="flex items-center gap-2 overflow-hidden">
                       <span className="text-lg">{selectedSource === "camera" ? "📷" : "🖼️"}</span>
-                      <span className="text-xs font-medium text-zinc-800 truncate">
-                        {fileName}
-                      </span>
+                      <div className="min-w-0">
+                        <span className="text-xs font-medium text-zinc-800 truncate block">
+                          {fileName}
+                        </span>
+                        {isCompressing && (
+                          <span className="text-[10px] text-blue-600 font-semibold">
+                            모바일 최적화 압축 중...
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={handleRemovePhoto}
-                      className="text-xs text-red-500 hover:text-red-700 font-semibold ml-2 shrink-0 px-1 py-0.5"
+                      disabled={isCompressing}
+                      className="text-xs text-red-500 hover:text-red-700 font-semibold ml-2 shrink-0 px-1 py-0.5 disabled:opacity-50"
                     >
                       삭제
                     </button>
@@ -199,7 +233,6 @@ export function CreateHandoverModal({
                       <input
                         ref={cameraRef}
                         type="file"
-                        name={selectedSource === "camera" ? "photo" : undefined}
                         accept="image/*"
                         capture="environment"
                         onChange={(e) => handleFileChange(e, "camera")}
@@ -216,7 +249,6 @@ export function CreateHandoverModal({
                       <input
                         ref={galleryRef}
                         type="file"
-                        name={selectedSource === "gallery" ? "photo" : undefined}
                         accept="image/*"
                         onChange={(e) => handleFileChange(e, "gallery")}
                         className="hidden"
@@ -241,10 +273,10 @@ export function CreateHandoverModal({
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending}
+                  disabled={isPending || isCompressing}
                   className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:opacity-50 transition-colors"
                 >
-                  {isPending ? "등록 중..." : "등록 완료"}
+                  {isCompressing ? "사진 최적화 중..." : isPending ? "등록 중..." : "등록 완료"}
                 </button>
               </div>
             </form>

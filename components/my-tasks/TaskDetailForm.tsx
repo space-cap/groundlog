@@ -8,6 +8,7 @@ import {
   uploadTaskPhotoAction,
   deleteTaskPhotoAction,
 } from "@/app/my-tasks/actions";
+import { compressImage } from "@/lib/image-compression";
 import type { TaskStatus } from "@/types/database";
 
 export interface PhotoItem {
@@ -55,8 +56,8 @@ export function TaskDetailForm({
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
 
     if (photos.length >= 5) {
       alert("사진은 최대 5장까지 등록할 수 있습니다.");
@@ -66,18 +67,23 @@ export function TaskDetailForm({
     setUploadError(null);
     setIsUploading(true);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
+      // 스마트폰 고화질 원본(5~15MB)을 200~400KB로 자동 압축 후 전송
+      const file = await compressImage(rawFile);
+      const formData = new FormData();
+      formData.append("file", file);
+
       const res = await uploadTaskPhotoAction(logId, formData);
       if (res.success && res.photo) {
         setPhotos((prev) => [...prev, res.photo!]);
       } else {
         setUploadError(res.error || "사진 업로드에 실패했습니다.");
       }
-    } catch {
-      setUploadError("사진 업로드 중 오류가 발생했습니다.");
+    } catch (err: unknown) {
+      console.error("사진 업로드 예외 발생:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
+      setUploadError(`사진 업로드 실패: ${errorMessage}`);
     } finally {
       setIsUploading(false);
       if (cameraInputRef.current) {
@@ -238,7 +244,7 @@ export function TaskDetailForm({
                 />
                 <span className="text-2xl group-hover:scale-110 transition-transform">📷</span>
                 <span className="text-[11px] font-bold text-blue-700 mt-1">
-                  {isUploading ? "업로드..." : "카메라 촬영"}
+                  {isUploading ? "최적화 중..." : "카메라 촬영"}
                 </span>
                 <span className="text-[9px] text-blue-500 font-medium">
                   즉시 촬영
@@ -257,7 +263,7 @@ export function TaskDetailForm({
                 />
                 <span className="text-2xl group-hover:scale-110 transition-transform">🖼️</span>
                 <span className="text-[11px] font-bold text-zinc-700 mt-1">
-                  {isUploading ? "업로드..." : "앨범 선택"}
+                  {isUploading ? "최적화 중..." : "앨범 선택"}
                 </span>
                 <span className="text-[9px] text-zinc-500 font-medium">
                   갤러리 사진
