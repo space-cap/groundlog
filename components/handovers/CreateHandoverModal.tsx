@@ -154,7 +154,6 @@ export function CreateHandoverModal({
                     type="file"
                     name="photo"
                     accept="image/*"
-                    capture="environment"
                     onChange={(e) => setFileName(e.target.files?.[0]?.name || "")}
                     className="hidden"
                   />

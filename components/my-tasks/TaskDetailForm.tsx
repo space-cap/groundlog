@@ -225,7 +225,6 @@ export function TaskDetailForm({
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={handlePhotoUpload}
                 disabled={isUploading}
                 className="hidden"
