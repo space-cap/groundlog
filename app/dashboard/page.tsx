@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AdminHeader } from "@/components/AdminHeader";
 
-export const dynamic = "force-dynamic";
+export const instant = false;
 
 export default async function DashboardPage() {
   const supabase = await createClient();
