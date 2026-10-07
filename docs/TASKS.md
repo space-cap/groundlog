@@ -36,10 +36,10 @@
   - [x] 현장 목록 및 신규 현장 등록 모달/페이지
   - [x] 현장 상세 화면 (`/sites/[id]`) - 기본정보 수정, 소속 직원/작업 목록
 
-- [ ] **STEP 06: 직원 관리 (`/employees`)**
-  - [ ] 직원 목록 (이름, 이메일, 역할, 소속 현장, 상태)
-  - [ ] 신규 직원 등록 Server Action (`SUPABASE_SERVICE_ROLE_KEY` 기반 auth.admin.createUser)
-  - [ ] 직원 정보 수정 및 비활성화
+- [x] **STEP 06: 직원 관리 (`/employees`)**
+  - [x] 직원 목록 (이름, 이메일, 역할, 소속 현장, 상태)
+  - [x] 신규 직원 등록 Server Action (`create_employee_account` 트랜잭션 RPC 기반)
+  - [x] 직원 정보 수정 및 현장 재배정/삭제
 
 - [ ] **STEP 07: 작업 정의 관리 (`/tasks`)**
   - [ ] 현장별 정기 작업 등록/수정/삭제

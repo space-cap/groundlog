@@ -249,6 +249,17 @@ export interface Database {
         };
         Returns: number;
       };
+      create_employee_account: {
+        Args: {
+          p_email: string;
+          p_password: string;
+          p_name: string;
+          p_role: string;
+          p_site_id?: string | null;
+          p_phone?: string | null;
+        };
+        Returns: string;
+      };
     };
   };
 }
