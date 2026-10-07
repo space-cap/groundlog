@@ -12,14 +12,14 @@
   - [x] 환경변수 템플릿(`.env.example`) 및 `.gitignore` 설정
   - [x] Next.js 16 proxy 세션 갱신 구조 적용
 
-- [ ] **STEP 02: 데이터베이스 마이그레이션 & 타입 생성**
+- [x] **STEP 02: 데이터베이스 마이그레이션 & 타입 생성**
   - [x] 테이블 7개 생성 SQL 작성 (`0001_initial_schema.sql`)
   - [x] 인덱스 및 외래키(ON DELETE CASCADE/SET NULL) 설정
   - [x] Row Level Security (RLS) 정책 작성 및 멀티테넌시 격리
   - [x] 당일 작업 로그 On-demand Lazy Creation 함수(`generate_daily_task_logs`) 생성
   - [x] Storage 버킷(`task-photos`) 생성 및 RLS 정책
   - [x] TypeScript Database 타입 정의 (`types/database.ts`)
-  - [ ] ⏳ **(진행 필요)** Supabase 대시보드 SQL Editor에서 `0001_initial_schema.sql` 실행
+  - [x] Supabase 원격 DB 마이그레이션 적용 완료 및 초기 데모 계정 시드 구축
 
 - [x] **STEP 03: 인증 & 권한별 라우팅 (Auth)**
   - [x] 로그인 화면 (`/login`)
