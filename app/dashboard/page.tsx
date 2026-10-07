@@ -127,7 +127,13 @@ export default async function DashboardPage() {
               {company?.name || "현장노트"}의 실시간 현장 작업 진행 상태입니다.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/tasks/results"
+              className="rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 transition-colors"
+            >
+              📊 작업 결과/사진
+            </Link>
             <Link
               href="/tasks"
               className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
@@ -136,7 +142,7 @@ export default async function DashboardPage() {
             </Link>
             <Link
               href="/sites"
-              className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 transition-colors"
+              className="hidden sm:inline-block rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 transition-colors"
             >
               현장 관리
             </Link>

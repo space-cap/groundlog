@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AdminHeader } from "@/components/AdminHeader";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
@@ -112,7 +113,15 @@ export default async function TasksPage() {
               현장별 일일/주간 반복 작업을 정의하고 체크리스트 및 담당자를 설정합니다.
             </p>
           </div>
-          <CreateTaskModal sites={siteList} users={userList} />
+          <div className="flex items-center gap-2">
+            <Link
+              href="/tasks/results"
+              className="inline-flex items-center rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 transition-colors"
+            >
+              📊 작업 결과/사진 확인
+            </Link>
+            <CreateTaskModal sites={siteList} users={userList} />
+          </div>
         </div>
 
         {/* 요약 통계 카드 */}
