@@ -4,15 +4,21 @@ import { logoutAction } from "@/app/auth/actions";
 interface AdminHeaderProps {
   userName: string;
   role: string;
+  activeNav?: "dashboard" | "sites" | "employees" | "tasks" | "handovers";
 }
 
-export function AdminHeader({ userName, role }: AdminHeaderProps) {
+export function AdminHeader({ userName, role, activeNav = "dashboard" }: AdminHeaderProps) {
   const todayStr = new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
     month: "long",
     day: "numeric",
     weekday: "short",
   }).format(new Date());
+
+  const navItemClass = (nav: string) =>
+    nav === activeNav
+      ? "px-3 py-2 rounded-lg text-zinc-900 bg-zinc-100 font-semibold"
+      : "px-3 py-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50";
 
   return (
     <header className="border-b border-zinc-200 bg-white sticky top-0 z-30">
@@ -30,34 +36,19 @@ export function AdminHeader({ userName, role }: AdminHeaderProps) {
             </Link>
 
             <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
-              <Link
-                href="/dashboard"
-                className="px-3 py-2 rounded-lg text-zinc-900 bg-zinc-100 font-semibold"
-              >
+              <Link href="/dashboard" className={navItemClass("dashboard")}>
                 대시보드
               </Link>
-              <Link
-                href="/sites"
-                className="px-3 py-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50"
-              >
+              <Link href="/sites" className={navItemClass("sites")}>
                 현장관리
               </Link>
-              <Link
-                href="/employees"
-                className="px-3 py-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50"
-              >
+              <Link href="/employees" className={navItemClass("employees")}>
                 직원관리
               </Link>
-              <Link
-                href="/tasks"
-                className="px-3 py-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50"
-              >
+              <Link href="/tasks" className={navItemClass("tasks")}>
                 작업관리
               </Link>
-              <Link
-                href="/handovers"
-                className="px-3 py-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50"
-              >
+              <Link href="/handovers" className={navItemClass("handovers")}>
                 인수인계
               </Link>
             </nav>
