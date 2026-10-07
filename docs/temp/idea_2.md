@@ -335,80 +335,98 @@ B3 배수펌프 이상
 ```text
 companies
    │
-   ├── sites
-   │      │
-   │      └── tasks
-   │             │
+   ├── sites ──────────┐
+   │      │            │ (소속 현장)
+   │      └── tasks    │
+   │             │     │
    │             └── task_logs
    │                    │
    │                    └── photos
    │
-   └── users
+   └── users ──────────┘
           │
           └── handover_notes
 ```
+
+> **멀티테넌시(회사 격리) 최적화 설계:**
+> Supabase RLS의 쿼리 성능과 보안을 위해 `tasks`, `task_logs`, `photos`, `handover_notes` 테이블에도 `company_id`를 직접 포함(반정규화)합니다. 이러면 3~4단계 복잡한 테이블 조인 없이 1줄의 RLS 정책으로 즉시 데이터가 안전하게 격리됩니다.
 
 ### 핵심 테이블
 
 ```text
 companies
-- id
+- id (UUID, PK)
 - name
 - created_at
 
 sites
-- id
-- company_id
+- id (UUID, PK)
+- company_id (UUID, FK -> companies.id)
 - name
 - address
 - manager_name
 - created_at
 
 users
-- id
-- company_id
+- id (UUID, PK, FK -> auth.users.id ON DELETE CASCADE)
+- company_id (UUID, FK -> companies.id)
+- site_id (UUID, FK -> sites.id, NULLABLE) -- 소속 현장
 - name
-- role
+- email                                     -- 로그인/표시용 이메일
+- role (ADMIN / MANAGER / WORKER)
 - phone
 - created_at
 
 tasks
-- id
-- site_id
+- id (UUID, PK)
+- company_id (UUID, FK -> companies.id)     -- RLS 직접 격리
+- site_id (UUID, FK -> sites.id)
 - name
 - description
-- assigned_user_id
-- repeat_type
-- active
+- checklist (JSONB DEFAULT '[]')            -- 세부 점검 항목 배열 (예: ["바닥", "변기", "세면대"])
+- assigned_user_id (UUID, FK -> users.id, NULLABLE)
+- repeat_type (NONE / DAILY / WEEKLY)
+- active (BOOLEAN DEFAULT TRUE)
 - created_at
 
 task_logs
-- id
-- task_id
-- user_id
-- work_date
-- status
+- id (UUID, PK)
+- company_id (UUID, FK -> companies.id)     -- RLS 직접 격리
+- task_id (UUID, FK -> tasks.id)
+- user_id (UUID, FK -> users.id)
+- work_date (DATE)                          -- 당일 작업 날짜
+- status (TODO / IN_PROGRESS / COMPLETED)
+- checklist_completed (JSONB DEFAULT '[]')  -- 완료 체크된 항목 배열
+- note                                      -- 특이사항
 - started_at
 - completed_at
-- note
 - created_at
 
 photos
-- id
-- task_log_id
+- id (UUID, PK)
+- company_id (UUID, FK -> companies.id)     -- Storage RLS 격리용
+- task_log_id (UUID, FK -> task_logs.id)
 - file_path
 - created_at
 
 handover_notes
-- id
-- site_id
-- user_id
+- id (UUID, PK)
+- company_id (UUID, FK -> companies.id)     -- RLS 직접 격리
+- site_id (UUID, FK -> sites.id)
+- user_id (UUID, FK -> users.id)            -- 작성자
 - title
 - content
-- status
-- created_at
+- photo_paths (TEXT[] DEFAULT '{}')         -- 인수인계 첨부 사진 경로 배열
+- status (OPEN / RESOLVED)
+- resolved_by (UUID, FK -> users.id, NULLABLE) -- 처리자
 - resolved_at
+- created_at
 ```
+
+### 핵심 로직 원칙
+1. **계정 생성**: 관리자가 직원을 생성할 때는 브라우저에서 `signUp()`을 호출하면 관리자 세션이 풀리므로, **Next.js Server Action / Route Handler에서 `SUPABASE_SERVICE_ROLE_KEY`를 사용해 `supabase.auth.admin.createUser()`로 생성**합니다.
+2. **당일 작업 자동 생성 (On-demand Lazy Creation)**: 복잡한 자정 스케줄러(`pg_cron`) 대신, 직원이 `/my-tasks`를 열거나 관리자가 `/dashboard`를 열 때 **"오늘 날짜의 task_log가 없으면 active=true인 tasks를 기준으로 당일 logs를 자동 생성"**하는 방식으로 단순하고 안정적으로 처리합니다.
+3. **세부 체크리스트**: 테이블을 불필요하게 늘리지 않고 `checklist`(점검목록)와 `checklist_completed`(완료목록)를 `JSONB`로 처리해 유연성을 확보합니다.
 
 실제 서비스에서는 **회사별 데이터 격리와 RLS를 처음부터 설계**해야 합니다. Supabase도 실제 배포 전 Row Level Security 정책 검토를 권장합니다. ([Supabase][1])
 
@@ -512,14 +530,14 @@ field-note/
 
 companies
 
-* id
+* id (UUID, PK)
 * name
 * created_at
 
 sites
 
-* id
-* company_id
+* id (UUID, PK)
+* company_id (UUID, FK -> companies.id)
 * name
 * address
 * manager_name
@@ -527,31 +545,37 @@ sites
 
 users
 
-* id
-* company_id
+* id (UUID, PK, FK -> auth.users.id ON DELETE CASCADE)
+* company_id (UUID, FK -> companies.id)
+* site_id (UUID, FK -> sites.id NULLABLE)
 * name
-* role
+* email
+* role (ADMIN / MANAGER / WORKER)
 * phone
 * created_at
 
 tasks
 
-* id
-* site_id
+* id (UUID, PK)
+* company_id (UUID, FK -> companies.id)
+* site_id (UUID, FK -> sites.id)
 * name
 * description
-* assigned_user_id
-* repeat_type
-* active
+* checklist (JSONB DEFAULT '[]')
+* assigned_user_id (UUID, FK -> users.id NULLABLE)
+* repeat_type (NONE / DAILY / WEEKLY)
+* active (BOOLEAN DEFAULT TRUE)
 * created_at
 
 task_logs
 
-* id
-* task_id
-* user_id
-* work_date
-* status
+* id (UUID, PK)
+* company_id (UUID, FK -> companies.id)
+* task_id (UUID, FK -> tasks.id)
+* user_id (UUID, FK -> users.id)
+* work_date (DATE)
+* status (TODO / IN_PROGRESS / COMPLETED)
+* checklist_completed (JSONB DEFAULT '[]')
 * started_at
 * completed_at
 * note
@@ -559,21 +583,25 @@ task_logs
 
 photos
 
-* id
-* task_log_id
+* id (UUID, PK)
+* company_id (UUID, FK -> companies.id)
+* task_log_id (UUID, FK -> task_logs.id)
 * file_path
 * created_at
 
 handover_notes
 
-* id
-* site_id
-* user_id
+* id (UUID, PK)
+* company_id (UUID, FK -> companies.id)
+* site_id (UUID, FK -> sites.id)
+* user_id (UUID, FK -> users.id)
 * title
 * content
-* status
-* created_at
+* photo_paths (TEXT[] DEFAULT '{}')
+* status (OPEN / RESOLVED)
+* resolved_by (UUID, FK -> users.id NULLABLE)
 * resolved_at
+* created_at
 
 role:
 
@@ -594,13 +622,14 @@ handover status:
 
 요구사항:
 
-* 모든 주요 테이블에 UUID primary key 사용
-* foreign key 설정
-* created_at 기본값 설정
-* 필요한 index 생성
-* 회사별 데이터가 서로 섞이지 않도록 설계
-* Supabase Row Level Security를 고려한다.
-* SQL migration 파일로 관리한다.
+* 모든 주요 테이블에 UUID primary key 사용 (`gen_random_uuid()`)
+* `users.id`는 `auth.users(id) ON DELETE CASCADE`와 연결
+* 멀티테넌시(회사별 격리) 성능을 위해 `tasks`, `task_logs`, `photos`, `handover_notes` 테이블에도 `company_id` 외래키를 포함하여 RLS 쿼리 시 깊은 조인이 발생하지 않도록 설계
+* foreign key 및 인덱스(`company_id`, `site_id`, `user_id`, `work_date` 등) 설정
+* created_at 기본값 설정 (`now()`)
+* Supabase Row Level Security(RLS)를 모든 테이블에 활성화하고, 현재 인증된 사용자의 `company_id`를 기준으로 데이터 격리 정책 작성
+* 당일 작업 자동 생성을 위한 DB 함수 (예: `generate_daily_task_logs(p_company_id, p_work_date)`) 작성
+* SQL migration 파일 (`supabase/migrations/0001_initial_schema.sql`) 로 관리
 * 기존 테이블을 임의로 삭제하지 않는다.
 
 먼저 migration SQL을 작성하고,
@@ -780,7 +809,7 @@ URL:
 * 이메일
 * 전화번호
 * 역할
-* 소속 현장
+* 소속 현장 (`site_id`)
 
 역할:
 
@@ -788,15 +817,16 @@ URL:
 * WORKER
 
 목록:
-이름 / 역할 / 현장 / 상태
+이름 / 이메일 / 역할 / 소속 현장 / 상태
 
 관리자와 MANAGER만 사용할 수 있다.
 
 회사별 데이터 격리를 유지한다.
 
-직원 추가 시 Supabase Auth 사용자와 업무용 users 정보를 연결할 수 있도록 구조를 만든다.
-
-처음부터 복잡한 초대 이메일 시스템을 만들지 말고 MVP에 필요한 최소 기능으로 구현한다.
+**중요 구현 규칙:**
+* 브라우저에서 `supabase.auth.signUp()`을 호출하면 관리자 브라우저 세션이 풀리고 새 직원으로 로그인되므로, **직원 생성은 반드시 Next.js Server Action / Route Handler에서 `SUPABASE_SERVICE_ROLE_KEY`를 사용해 `supabase.auth.admin.createUser()`로 처리**한다.
+* 생성된 `auth.users`의 ID를 기반으로 업무용 `public.users`에 레코드를 삽입한다.
+* 처음부터 복잡한 초대 이메일 발송 대신 관리자가 임시 비밀번호를 발급하는 MVP 방식으로 구현한다.
 
 ---
 
@@ -818,10 +848,11 @@ URL:
 
 * 작업명
 * 설명
-* 현장
-* 담당 직원
+* 세부 체크리스트 항목 (입력 시 JSON 배열로 저장, 예: ["바닥 청소", "세면대 청소"])
+* 현장 (`site_id`)
+* 담당 직원 (`assigned_user_id`)
 * 반복 유형
-* 활성 여부
+* 활성 여부 (`active`)
 
 반복 유형:
 
@@ -834,16 +865,11 @@ URL:
 현장: 강남빌딩
 담당자: 김철수
 반복: DAILY
+체크리스트: ["바닥 청소", "변기 청소", "세면대 청소", "휴지통 비우기"]
 
 오늘의 작업을 조회할 수 있도록 설계한다.
 
-작업 자체와 실제 작업 수행 기록을 분리한다.
-
-tasks:
-작업 정의
-
-task_logs:
-실제 특정 날짜의 작업 결과
+작업 자체(`tasks`)와 실제 특정 날짜의 작업 수행 기록(`task_logs`)을 분리한다.
 
 관리자와 MANAGER만 작업을 관리할 수 있다.
 
@@ -857,6 +883,9 @@ URL:
 /my-tasks
 
 가장 중요한 모바일 화면이다.
+
+**당일 작업 로딩 규칙:**
+* 직원이 `/my-tasks`에 접근했을 때 오늘 날짜(`work_date = CURRENT_DATE`)의 `task_logs`가 아직 없다면, 해당 직원/현장의 활성(`active=true`) 작업들을 기반으로 오늘치 `task_logs`를 자동 생성(Lazy Upsert)하여 즉시 화면에 노출한다.
 
 화면 상단:
 오늘 날짜
@@ -874,13 +903,14 @@ TODO
 IN_PROGRESS
 COMPLETED
 
-직원이 작업 카드를 누르면 작업 상세 화면으로 이동한다.
+직원이 작업 카드를 누르면 작업 상세/완료 화면으로 이동한다.
 
 작업 완료 화면에서는:
 
-작업 체크
-사진 추가
-특이사항 입력
+* 세부 체크리스트 체크 (`checklist_completed`에 저장)
+* 사진 추가 (최대 5장)
+* 특이사항 입력 (`note`)
+* 작업 완료 버튼
 
 을 제공한다.
 
@@ -944,12 +974,12 @@ URL:
 
 등록 정보:
 
-* 현장
+* 현장 (`site_id`)
 * 제목
 * 내용
-* 사진 선택
-* 등록자
-* 등록시간
+* 사진 첨부 (`photo_paths TEXT[]`)
+* 등록자 (`user_id = auth.uid()`)
+* 등록시간 (`created_at`)
 
 상태:
 OPEN
@@ -964,14 +994,12 @@ RESOLVED
 
 관리자는 모든 인수인계를 볼 수 있다.
 
-직원은 자신이 근무하는 현장의 인수인계를 볼 수 있다.
+직원은 자신이 근무하는 현장(`users.site_id`)의 인수인계를 볼 수 있다.
 
-처리완료 시:
+처리완료 버튼 클릭 시:
 
-* 처리자
-* 처리시간
-
-을 기록한다.
+* 상태를 `RESOLVED`로 변경
+* 처리자(`resolved_by = auth.uid()`) 및 처리시간(`resolved_at = now()`) 기록
 
 ---
 
