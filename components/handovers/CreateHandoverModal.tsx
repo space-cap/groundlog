@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, useEffect } from "react";
+import { useState, useActionState, useEffect, useRef } from "react";
 import { createHandoverAction, type HandoverActionState } from "@/app/handovers/actions";
 
 interface SiteOption {
@@ -24,6 +24,10 @@ export function CreateHandoverModal({
     userSiteId || sites[0]?.id || "",
   );
   const [fileName, setFileName] = useState<string>("");
+  const [selectedSource, setSelectedSource] = useState<"camera" | "gallery" | null>(null);
+
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
 
   const [state, formAction, isPending] = useActionState<
     HandoverActionState | null,
@@ -34,8 +38,31 @@ export function CreateHandoverModal({
     if (state?.success) {
       setIsOpen(false);
       setFileName("");
+      setSelectedSource(null);
+      if (cameraRef.current) cameraRef.current.value = "";
+      if (galleryRef.current) galleryRef.current.value = "";
     }
   }, [state?.success]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, source: "camera" | "gallery") => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+      setSelectedSource(source);
+      if (source === "camera" && galleryRef.current) {
+        galleryRef.current.value = "";
+      } else if (source === "gallery" && cameraRef.current) {
+        cameraRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setFileName("");
+    setSelectedSource(null);
+    if (cameraRef.current) cameraRef.current.value = "";
+    if (galleryRef.current) galleryRef.current.value = "";
+  };
 
   return (
     <>
@@ -146,22 +173,62 @@ export function CreateHandoverModal({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 uppercase mb-1">
+                <label className="block text-xs font-semibold text-zinc-700 uppercase mb-1.5">
                   현장 사진 첨부 (옵션)
                 </label>
-                <label className="flex items-center gap-2 p-2.5 rounded-lg border border-dashed border-zinc-300 hover:border-blue-500 hover:bg-blue-50/20 cursor-pointer bg-zinc-50">
-                  <input
-                    type="file"
-                    name="photo"
-                    accept="image/*"
-                    onChange={(e) => setFileName(e.target.files?.[0]?.name || "")}
-                    className="hidden"
-                  />
-                  <span className="text-lg">📷</span>
-                  <span className="text-xs text-zinc-600 flex-1 truncate">
-                    {fileName || "사진 파일 선택 또는 카메라 촬영"}
-                  </span>
-                </label>
+
+                {fileName ? (
+                  <div className="flex items-center justify-between p-2.5 rounded-lg border border-blue-200 bg-blue-50/40">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <span className="text-lg">{selectedSource === "camera" ? "📷" : "🖼️"}</span>
+                      <span className="text-xs font-medium text-zinc-800 truncate">
+                        {fileName}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="text-xs text-red-500 hover:text-red-700 font-semibold ml-2 shrink-0 px-1 py-0.5"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer bg-blue-50/20 transition-all text-blue-700 active:scale-95 group">
+                      <input
+                        ref={cameraRef}
+                        type="file"
+                        name={selectedSource === "camera" ? "photo" : undefined}
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => handleFileChange(e, "camera")}
+                        className="hidden"
+                      />
+                      <span className="text-lg group-hover:scale-110 transition-transform">📷</span>
+                      <div className="text-left">
+                        <div className="text-xs font-bold leading-tight">카메라 촬영</div>
+                        <div className="text-[10px] text-blue-500 leading-tight">즉시 촬영</div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-zinc-300 hover:border-zinc-500 hover:bg-zinc-100/60 cursor-pointer bg-zinc-50 transition-all text-zinc-700 active:scale-95 group">
+                      <input
+                        ref={galleryRef}
+                        type="file"
+                        name={selectedSource === "gallery" ? "photo" : undefined}
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e, "gallery")}
+                        className="hidden"
+                      />
+                      <span className="text-lg group-hover:scale-110 transition-transform">🖼️</span>
+                      <div className="text-left">
+                        <div className="text-xs font-bold leading-tight">앨범 선택</div>
+                        <div className="text-[10px] text-zinc-500 leading-tight">갤러리 사진</div>
+                      </div>
+                    </label>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100">

@@ -43,7 +43,8 @@ export function TaskDetailForm({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const toggleCheckItem = (item: string) => {
     if (completedItems.includes(item)) {
@@ -79,8 +80,11 @@ export function TaskDetailForm({
       setUploadError("사진 업로드 중 오류가 발생했습니다.");
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = "";
+      }
+      if (galleryInputRef.current) {
+        galleryInputRef.current.value = "";
       }
     }
   };
@@ -218,22 +222,48 @@ export function TaskDetailForm({
             </div>
           ))}
 
-          {/* 사진 추가 버튼 */}
+          {/* 사진 추가 버튼 2개 (카메라 촬영 / 앨범 선택) */}
           {photos.length < 5 && (
-            <label className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 hover:border-blue-500 hover:bg-blue-50/30 cursor-pointer transition-colors bg-zinc-50">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                disabled={isUploading}
-                className="hidden"
-              />
-              <span className="text-xl">📸</span>
-              <span className="text-[11px] font-semibold text-zinc-600 mt-1">
-                {isUploading ? "업로드 중..." : "사진 촬영/선택"}
-              </span>
-            </label>
+            <>
+              {/* 1. 카메라 즉시 촬영 버튼 */}
+              <label className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer transition-all bg-blue-50/20 active:scale-95 text-center p-2 group">
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handlePhotoUpload}
+                  disabled={isUploading}
+                  className="hidden"
+                />
+                <span className="text-2xl group-hover:scale-110 transition-transform">📷</span>
+                <span className="text-[11px] font-bold text-blue-700 mt-1">
+                  {isUploading ? "업로드..." : "카메라 촬영"}
+                </span>
+                <span className="text-[9px] text-blue-500 font-medium">
+                  즉시 촬영
+                </span>
+              </label>
+
+              {/* 2. 갤러리 앨범 선택 버튼 */}
+              <label className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 hover:border-zinc-500 hover:bg-zinc-100/60 cursor-pointer transition-all bg-zinc-50 active:scale-95 text-center p-2 group">
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={isUploading}
+                  className="hidden"
+                />
+                <span className="text-2xl group-hover:scale-110 transition-transform">🖼️</span>
+                <span className="text-[11px] font-bold text-zinc-700 mt-1">
+                  {isUploading ? "업로드..." : "앨범 선택"}
+                </span>
+                <span className="text-[9px] text-zinc-500 font-medium">
+                  갤러리 사진
+                </span>
+              </label>
+            </>
           )}
         </div>
       </section>
