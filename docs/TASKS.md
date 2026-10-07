@@ -21,11 +21,11 @@
   - [x] TypeScript Database 타입 정의 (`types/database.ts`)
   - [ ] ⏳ **(진행 필요)** Supabase 대시보드 SQL Editor에서 `0001_initial_schema.sql` 실행
 
-- [ ] **STEP 03: 인증 & 권한별 라우팅 (Auth)**
-  - [ ] 로그인 화면 (`/login`)
-  - [ ] 역할별(ADMIN/MANAGER vs WORKER) 자동 리다이렉트
-  - [ ] `proxy.ts` 미인증자 접근 제어 및 보호 라우트 처리
-  - [ ] 로그아웃 기능
+- [x] **STEP 03: 인증 & 권한별 라우팅 (Auth)**
+  - [x] 로그인 화면 (`/login`)
+  - [x] 역할별(ADMIN/MANAGER vs WORKER) 자동 리다이렉트
+  - [x] `proxy.ts` 미인증자 접근 제어 및 보호 라우트 처리
+  - [x] 로그아웃 기능
 
 - [ ] **STEP 04: 관리자 대시보드 (`/dashboard`)**
   - [ ] 당일 작업 통계 카드 (전체/완료/진행/미완료)
