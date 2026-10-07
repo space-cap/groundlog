@@ -1,6 +1,9 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ==============================================================================
+# groundlog (현장노트) .gitignore
+# Next.js 16 (Turbopack) + Supabase + TypeScript
+# ==============================================================================
 
-# dependencies
+# 1. 의존성 (Dependencies)
 /node_modules
 /.pnp
 .pnp.*
@@ -10,36 +13,66 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# 2. Next.js 빌드 및 캐시
 /.next/
 /out/
-
-# production
 /build
+.turbo/
 
-# misc
-.DS_Store
-*.pem
+# 3. 환경변수 및 비밀키 파일 (Security)
+# .env.example을 제외한 모든 환경변수 파일 무시
+.env*
+!.env.example
 
-# debug
+# 4. Vercel 및 클라우드 배포
+.vercel
+
+# 5. Supabase CLI & 로컬 아티팩트
+.supabase/
+supabase/.temp/
+supabase/.branches/
+
+# 6. 로그 (Logs)
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-!.env.example
+# 7. 테스트 및 커버리지 (Testing)
+/coverage
 
-# vercel
-.vercel
-
-# typescript
+# 8. TypeScript & 빌드 캐시
 *.tsbuildinfo
 next-env.d.ts
 
-# supabase cli
-supabase/.temp/
+# 9. IDE & 에디터 설정
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 10. OS 생성 임시 파일
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# 기타 임시/인증키 파일
+*.pem
+*.bak
+*.tmp
+scratch/
