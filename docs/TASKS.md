@@ -41,10 +41,10 @@
   - [x] 신규 직원 등록 Server Action (`create_employee_account` 트랜잭션 RPC 기반)
   - [x] 직원 정보 수정 및 현장 재배정/삭제
 
-- [ ] **STEP 07: 작업 정의 관리 (`/tasks`)**
-  - [ ] 현장별 정기 작업 등록/수정/삭제
-  - [ ] 세부 체크리스트 동적 추가 기능 (`checklist` JSONB)
-  - [ ] 반복 주기(DAILY/WEEKLY/NONE) 및 담당자 지정
+- [x] **STEP 07: 작업 정의 관리 (`/tasks`)**
+  - [x] 현장별 정기 작업 등록/수정/삭제
+  - [x] 세부 체크리스트 동적 추가 기능 (`checklist` JSONB)
+  - [x] 반복 주기(DAILY/WEEKLY/NONE) 및 담당자 지정, 활성 토글
 
 - [ ] **STEP 08: 직원 모바일 화면 - 오늘의 작업 (`/my-tasks`)**
   - [ ] 오늘 날짜 및 작업 목록 노출 (접근 시 당일 로그 자동 생성 연동)
