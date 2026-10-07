@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { loginAction, type LoginState } from "./actions";
+import { DemoLoginButtons } from "@/components/login/DemoLoginButtons";
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState<LoginState | null, FormData>(
@@ -75,6 +76,9 @@ export default function LoginPage() {
             {isPending ? "로그인 중..." : "로그인"}
           </button>
         </form>
+
+        {/* 데모 계정 원클릭 체험 버튼 */}
+        <DemoLoginButtons />
 
         <div className="pt-2 text-center text-xs text-zinc-400">
           계정 발급 및 문의는 관리자에게 요청하세요.

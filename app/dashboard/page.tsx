@@ -291,12 +291,21 @@ export default async function DashboardPage() {
                           />
                         </div>
                       </div>
-                      <Link
-                        href={`/sites/${site.id}`}
-                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 text-zinc-700 shrink-0"
-                      >
-                        상세
-                      </Link>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Link
+                          href={`/reports/${site.id}/${todayStr}`}
+                          className="text-xs font-semibold px-2 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700"
+                          title="일일 업무 보고서 인쇄 및 링크 복사"
+                        >
+                          📄 보고서
+                        </Link>
+                        <Link
+                          href={`/sites/${site.id}`}
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 text-zinc-700"
+                        >
+                          상세
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 ))}

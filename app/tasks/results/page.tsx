@@ -179,6 +179,15 @@ export default async function TaskResultsPage({ searchParams }: PageProps) {
               >
                 조회
               </button>
+
+              {sites[0] && (
+                <Link
+                  href={`/reports/${sites[0].id}/${targetDate}`}
+                  className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 shadow-2xs whitespace-nowrap"
+                >
+                  📄 일일 보고서 A4 출력
+                </Link>
+              )}
             </form>
           </div>
         </div>

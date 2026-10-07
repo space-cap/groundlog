@@ -48,3 +48,29 @@ export async function loginAction(
     redirect("/dashboard");
   }
 }
+
+/**
+ * 데모 계정 원클릭 간편 로그인 (영업/시연용)
+ */
+export async function demoLoginAction(role: "ADMIN" | "WORKER"): Promise<LoginState> {
+  const email = role === "ADMIN" ? "admin@groundlog.com" : "worker@groundlog.com";
+  const password = "password1234!";
+
+  const supabase = await createClient();
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (authError || !authData.user) {
+    return {
+      error: "데모 계정 로그인에 실패했습니다. 관리자에게 문의하세요.",
+    };
+  }
+
+  if (role === "WORKER") {
+    redirect("/my-tasks");
+  } else {
+    redirect("/dashboard");
+  }
+}
