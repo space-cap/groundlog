@@ -229,12 +229,19 @@ export function CreateHandoverModal({
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    <label className="flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer bg-blue-50/20 transition-all text-blue-700 active:scale-95 group">
+                    <label
+                      htmlFor="handover-camera-input"
+                      className="flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer bg-blue-50/20 transition-all text-blue-700 active:scale-95 group"
+                    >
                       <input
+                        id="handover-camera-input"
                         ref={cameraRef}
                         type="file"
                         accept="image/*"
                         capture="environment"
+                        onClick={(e) => {
+                          (e.target as HTMLInputElement).value = "";
+                        }}
                         onChange={(e) => handleFileChange(e, "camera")}
                         className="hidden"
                       />
@@ -245,11 +252,18 @@ export function CreateHandoverModal({
                       </div>
                     </label>
 
-                    <label className="flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-zinc-300 hover:border-zinc-500 hover:bg-zinc-100/60 cursor-pointer bg-zinc-50 transition-all text-zinc-700 active:scale-95 group">
+                    <label
+                      htmlFor="handover-gallery-input"
+                      className="flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-zinc-300 hover:border-zinc-500 hover:bg-zinc-100/60 cursor-pointer bg-zinc-50 transition-all text-zinc-700 active:scale-95 group"
+                    >
                       <input
+                        id="handover-gallery-input"
                         ref={galleryRef}
                         type="file"
                         accept="image/*"
+                        onClick={(e) => {
+                          (e.target as HTMLInputElement).value = "";
+                        }}
                         onChange={(e) => handleFileChange(e, "gallery")}
                         className="hidden"
                       />

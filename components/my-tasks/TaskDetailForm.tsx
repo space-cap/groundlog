@@ -57,19 +57,31 @@ export function TaskDetailForm({
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawFile = e.target.files?.[0];
-    if (!rawFile) return;
+    if (!rawFile) {
+      console.warn("선택 또는 촬영된 사진 파일이 없습니다.");
+      return;
+    }
+
+    if (rawFile.size === 0) {
+      alert("촬영된 사진 데이터가 비어 있습니다 (0 byte). 카메라 권한을 확인하고 다시 촬영해 주세요.");
+      return;
+    }
 
     if (photos.length >= 5) {
       alert("사진은 최대 5장까지 등록할 수 있습니다.");
       return;
     }
 
+    console.log(`[사진 업로드 시작] 원본: ${rawFile.name}, 용량: ${(rawFile.size / (1024 * 1024)).toFixed(2)}MB, MIME: ${rawFile.type || "없음(자동보정)"}`);
+
     setUploadError(null);
     setIsUploading(true);
 
     try {
-      // 스마트폰 고화질 원본(5~15MB)을 200~400KB로 자동 압축 후 전송
+      // 스마트폰 고화질 원본(5~25MB)을 200~400KB로 자동 압축 후 전송
       const file = await compressImage(rawFile);
+      console.log(`[사진 압축 완료] 결과: ${file.name}, 압축용량: ${(file.size / 1024).toFixed(1)}KB`);
+
       const formData = new FormData();
       formData.append("file", file);
 
@@ -232,12 +244,19 @@ export function TaskDetailForm({
           {photos.length < 5 && (
             <>
               {/* 1. 카메라 즉시 촬영 버튼 */}
-              <label className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer transition-all bg-blue-50/20 active:scale-95 text-center p-2 group">
+              <label
+                htmlFor="task-camera-input"
+                className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer transition-all bg-blue-50/20 active:scale-95 text-center p-2 group"
+              >
                 <input
+                  id="task-camera-input"
                   ref={cameraInputRef}
                   type="file"
                   accept="image/*"
                   capture="environment"
+                  onClick={(e) => {
+                    (e.target as HTMLInputElement).value = "";
+                  }}
                   onChange={handlePhotoUpload}
                   disabled={isUploading}
                   className="hidden"
@@ -252,11 +271,18 @@ export function TaskDetailForm({
               </label>
 
               {/* 2. 갤러리 앨범 선택 버튼 */}
-              <label className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 hover:border-zinc-500 hover:bg-zinc-100/60 cursor-pointer transition-all bg-zinc-50 active:scale-95 text-center p-2 group">
+              <label
+                htmlFor="task-gallery-input"
+                className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 hover:border-zinc-500 hover:bg-zinc-100/60 cursor-pointer transition-all bg-zinc-50 active:scale-95 text-center p-2 group"
+              >
                 <input
+                  id="task-gallery-input"
                   ref={galleryInputRef}
                   type="file"
                   accept="image/*"
+                  onClick={(e) => {
+                    (e.target as HTMLInputElement).value = "";
+                  }}
                   onChange={handlePhotoUpload}
                   disabled={isUploading}
                   className="hidden"

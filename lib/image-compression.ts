@@ -1,7 +1,8 @@
 /**
  * 클라이언트 단 모바일 사진 자동 압축 유틸리티
- * - 스마트폰 고화질 원본(5~15MB)을 최대 1600px, JPEG 80% 품질로 리사이징
- * - 용량을 200~400KB로 95% 이상 압축하여 Server Action 페이로드 제한(4.5MB) 및 통신 지연 방지
+ * - 스마트폰 고화질 원본(5~25MB)을 최대 1600px, JPEG 80% 품질로 리사이징
+ * - 안드로이드 카메라 직촬영 시 file.type이 ""이거나 application/octet-stream인 경우도 완벽 대응
+ * - Vercel(4.5MB) 및 Server Action 본문 한도 초과 원천 차단
  */
 export async function compressImage(
   file: File,
@@ -9,42 +10,59 @@ export async function compressImage(
   maxHeight = 1600,
   quality = 0.8,
 ): Promise<File> {
-  // 이미지가 아니거나 GIF, SVG인 경우 원본 유지
-  if (
-    !file.type.startsWith("image/") ||
-    file.type === "image/svg+xml" ||
-    file.type === "image/gif"
-  ) {
+  // GIF, SVG는 원본 유지
+  if (file.type === "image/svg+xml" || file.type === "image/gif") {
     return file;
   }
 
-  // 200KB 이하의 작은 이미지는 굳이 압축하지 않음
-  if (file.size <= 200 * 1024) {
+  // 200KB 이하의 이미 작은 파일은 이미지가 확실한 경우에만 스킵
+  if (file.size <= 200 * 1024 && file.type.startsWith("image/")) {
     return file;
   }
+
+  // 안드로이드 카메라 직촬영 시 file.type이 비어있거나 octet-stream인 경우가 많음
+  // 이미지 처리를 위해 MIME 타입을 image/jpeg로 보정한 File 생성
+  let workingFile = file;
+  if (!file.type || !file.type.startsWith("image/")) {
+    workingFile = new File([file], file.name || "camera_photo.jpg", {
+      type: "image/jpeg",
+      lastModified: file.lastModified || Date.now(),
+    });
+  }
+
+  let objectUrlToRevoke: string | null = null;
 
   try {
     let width = 0;
     let height = 0;
-    let source: ImageBitmap | HTMLImageElement;
+    let source: ImageBitmap | HTMLImageElement | null = null;
 
-    // 모바일 브라우저 표준: createImageBitmap (EXIF 회전 자동 처리 지원)
+    // 1. createImageBitmap 시도 (모바일 표준, EXIF 회전 지원)
+    let bitmapLoaded = false;
     if (typeof window !== "undefined" && "createImageBitmap" in window) {
       try {
-        const bitmap = await createImageBitmap(file);
+        const bitmap = await createImageBitmap(workingFile);
         width = bitmap.width;
         height = bitmap.height;
         source = bitmap;
-      } catch {
-        // createImageBitmap 실패 시 fallback (일부 특이 포맷)
-        source = await loadImageElement(file);
-        width = source.width;
-        height = source.height;
+        bitmapLoaded = true;
+      } catch (err) {
+        console.warn("createImageBitmap 실패, Image 객체로 대체 시도:", err);
       }
-    } else {
-      source = await loadImageElement(file);
-      width = source.width;
-      height = source.height;
+    }
+
+    // 2. createImageBitmap 실패 시 fallback (HTMLImageElement)
+    if (!bitmapLoaded) {
+      const { img, url } = await loadImageElement(workingFile);
+      objectUrlToRevoke = url;
+      width = img.naturalWidth || img.width;
+      height = img.naturalHeight || img.height;
+      source = img;
+    }
+
+    if (!source || width === 0 || height === 0) {
+      if (objectUrlToRevoke) URL.revokeObjectURL(objectUrlToRevoke);
+      return file;
     }
 
     // 축소 비율 계산 (가로세로 비율 유지)
@@ -64,16 +82,21 @@ export async function compressImage(
 
     const ctx = canvas.getContext("2d");
     if (!ctx) {
+      if (objectUrlToRevoke) URL.revokeObjectURL(objectUrlToRevoke);
       return file;
     }
 
-    // 고품질 이미지 스무딩 적용
+    // 고품질 스무딩
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(source, 0, 0, width, height);
 
     if ("close" in source && typeof source.close === "function") {
-      source.close(); // ImageBitmap 메모리 해제
+      source.close();
+    }
+    if (objectUrlToRevoke) {
+      URL.revokeObjectURL(objectUrlToRevoke);
+      objectUrlToRevoke = null;
     }
 
     const blob = await new Promise<Blob | null>((resolve) => {
@@ -84,26 +107,29 @@ export async function compressImage(
       return file;
     }
 
-    // 파일 이름 확장자를 .jpg로 정리
-    const baseName =
-      file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
+    // 안전한 파일명 생성 (.jpg 보장)
+    const rawName = file.name || "photo.jpg";
+    const dotIndex = rawName.lastIndexOf(".");
+    const baseName = dotIndex > 0 ? rawName.substring(0, dotIndex) : rawName;
     return new File([blob], `${baseName}.jpg`, {
       type: "image/jpeg",
       lastModified: Date.now(),
     });
   } catch (err) {
-    console.warn("이미지 자동 압축 실패, 원본 파일 사용:", err);
+    if (objectUrlToRevoke) {
+      URL.revokeObjectURL(objectUrlToRevoke);
+    }
+    console.error("이미지 자동 압축 중 예외 발생:", err);
     return file;
   }
 }
 
-function loadImageElement(file: File): Promise<HTMLImageElement> {
+function loadImageElement(file: File): Promise<{ img: HTMLImageElement; url: string }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
+      resolve({ img, url });
     };
     img.onerror = (e) => {
       URL.revokeObjectURL(url);
