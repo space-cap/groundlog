@@ -6,6 +6,7 @@ import {
   toggleHandoverStatusAction,
   deleteHandoverAction,
 } from "@/app/handovers/actions";
+import { formatKoreanDateTime } from "@/lib/date";
 import type { HandoverStatus } from "@/types/database";
 
 interface SiteOption {
@@ -142,12 +143,7 @@ export function HandoverList({
           filteredItems.map((item) => {
             const isResolved = item.status === "RESOLVED";
             const canDelete = isAdminOrManager || item.user_id === currentUserId;
-            const formattedDate = new Intl.DateTimeFormat("ko-KR", {
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            }).format(new Date(item.created_at));
+            const formattedDate = formatKoreanDateTime(item.created_at);
 
             return (
               <div

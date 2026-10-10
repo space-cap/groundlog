@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { ReportActionButtons } from "@/components/reports/ReportActionButtons";
+import { formatKoreanFullDate, formatKoreanPrintDateTime, formatKoreanTime } from "@/lib/date";
 
 export const instant = false;
 
@@ -144,20 +145,8 @@ export default async function DailyReportPage({ params }: PageProps) {
 
   // 날짜 포맷
   const parsedDate = new Date(date);
-  const formattedDate = new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "long",
-  }).format(parsedDate);
-
-  const printTime = new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date());
+  const formattedDate = formatKoreanFullDate(parsedDate);
+  const printTime = formatKoreanPrintDateTime();
 
   // 통계 계산
   const totalTasks = logsWithPhotos.length;
@@ -286,10 +275,7 @@ export default async function DailyReportPage({ params }: PageProps) {
                   {logsWithPhotos.map((item, idx) => {
                     const isDone = item.status === "COMPLETED";
                     const completedTime = item.completed_at
-                      ? new Intl.DateTimeFormat("ko-KR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }).format(new Date(item.completed_at))
+                      ? formatKoreanTime(item.completed_at)
                       : "-";
 
                     return (

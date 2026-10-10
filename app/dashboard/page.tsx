@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AdminHeader } from "@/components/AdminHeader";
+import { getKoreanToday } from "@/lib/date";
 
 export const instant = false;
 
@@ -34,8 +35,8 @@ export default async function DashboardPage() {
     .eq("id", profile.company_id)
     .single();
 
-  // 3. 오늘 날짜 (YYYY-MM-DD)
-  const todayStr = new Date().toISOString().split("T")[0];
+  // 3. 오늘 날짜 (YYYY-MM-DD - 한국 표준시 기준)
+  const todayStr = getKoreanToday();
 
   // 4. 당일 작업 로그 자동 생성 함수 호출 (혹시 오늘치 로그가 안 만들어졌을 경우 대비)
   await supabase.rpc("generate_daily_task_logs", {

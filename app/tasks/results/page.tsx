@@ -6,6 +6,7 @@ import {
   TaskResultsViewer,
   type TaskResultLog,
 } from "@/components/tasks/TaskResultsViewer";
+import { getKoreanToday } from "@/lib/date";
 
 export const instant = false;
 
@@ -15,7 +16,7 @@ interface PageProps {
 
 export default async function TaskResultsPage({ searchParams }: PageProps) {
   const { date } = await searchParams;
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = getKoreanToday();
   const targetDate = date || todayStr;
 
   const supabase = await createClient();

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AdminHeader } from "@/components/AdminHeader";
 import { CreateSiteModal } from "@/components/sites/CreateSiteModal";
+import { getKoreanToday } from "@/lib/date";
 
 export const instant = false;
 
@@ -26,7 +27,7 @@ export default async function SitesPage() {
     redirect("/my-tasks");
   }
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = getKoreanToday();
 
   // 1. 현장 목록 조회
   const { data: sites } = await supabase

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { WorkerHeader } from "@/components/WorkerHeader";
+import { getKoreanToday, formatKoreanDate, formatKoreanTime } from "@/lib/date";
 
 export const instant = false;
 
@@ -26,13 +27,8 @@ export default async function MyTasksPage() {
     redirect("/login");
   }
 
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-  const dateFormatted = new Intl.DateTimeFormat("ko-KR", {
-    month: "long",
-    day: "numeric",
-    weekday: "long",
-  }).format(today);
+  const todayStr = getKoreanToday();
+  const dateFormatted = formatKoreanDate();
 
   // 1. 당일 작업 로그 On-demand Lazy Creation 실행
   await supabase.rpc("generate_daily_task_logs", {
@@ -237,11 +233,7 @@ export default async function MyTasksPage() {
 
                     {log.completed_at && (
                       <span className="text-emerald-700 font-medium text-[11px]">
-                        {new Intl.DateTimeFormat("ko-KR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }).format(new Date(log.completed_at))}{" "}
-                        완료
+                        {formatKoreanTime(log.completed_at)} 완료
                       </span>
                     )}
                   </div>

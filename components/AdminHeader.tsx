@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { logoutAction } from "@/app/auth/actions";
+import { formatKoreanDate } from "@/lib/date";
 
 interface AdminHeaderProps {
   userName: string;
@@ -8,12 +9,7 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ userName, role, activeNav = "dashboard" }: AdminHeaderProps) {
-  const todayStr = new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-  }).format(new Date());
+  const todayStr = formatKoreanDate();
 
   const navItemClass = (nav: string) =>
     nav === activeNav

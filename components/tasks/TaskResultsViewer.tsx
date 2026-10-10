@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { formatKoreanTime } from "@/lib/date";
 import type { TaskStatus } from "@/types/database";
 
 interface SiteOption {
@@ -108,10 +109,7 @@ export function TaskResultsViewer({
             const totalChecklist = log.checklist.length;
             const completedCount = log.checklist_completed.length;
             const completedTimeStr = log.completed_at
-              ? new Intl.DateTimeFormat("ko-KR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }).format(new Date(log.completed_at))
+              ? formatKoreanTime(log.completed_at)
               : null;
 
             return (

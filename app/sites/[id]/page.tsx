@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AdminHeader } from "@/components/AdminHeader";
 import { EditSiteForm } from "@/components/sites/EditSiteForm";
+import { formatKoreanDateTime } from "@/lib/date";
 
 export const instant = false;
 
@@ -330,12 +331,7 @@ export default async function SiteDetailPage({ params }: PageProps) {
                 const authorName = (
                   item.users as unknown as { name: string } | null
                 )?.name;
-                const formattedDate = new Intl.DateTimeFormat("ko-KR", {
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }).format(new Date(item.created_at));
+                const formattedDate = formatKoreanDateTime(item.created_at);
 
                 return (
                   <div
