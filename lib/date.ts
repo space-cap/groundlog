@@ -103,3 +103,42 @@ export function formatKoreanPrintDateTime(date: string | Date | null | undefined
     hour12: false,
   }).format(d);
 }
+
+/**
+ * 주어진 "YYYY-MM-DD" 기준 하루 전 날짜를 "YYYY-MM-DD"로 반환
+ */
+export function getPreviousDate(dateStr: string): string {
+  const parts = dateStr.split("-").map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return dateStr;
+  const [y, m, d] = parts;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - 1);
+  return dt.toISOString().split("T")[0];
+}
+
+/**
+ * 주어진 "YYYY-MM-DD" 기준 하루 다음 날짜를 "YYYY-MM-DD"로 반환
+ */
+export function getNextDate(dateStr: string): string {
+  const parts = dateStr.split("-").map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return dateStr;
+  const [y, m, d] = parts;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + 1);
+  return dt.toISOString().split("T")[0];
+}
+
+/**
+ * 주어진 "YYYY-MM-DD"가 오늘(한국 시간 기준)인지 확인
+ */
+export function isTodayKorean(dateStr: string): boolean {
+  return dateStr === getKoreanToday();
+}
+
+/**
+ * 주어진 "YYYY-MM-DD"가 미래(내일 이후)인지 확인
+ */
+export function isFutureDate(dateStr: string): boolean {
+  return dateStr > getKoreanToday();
+}
+

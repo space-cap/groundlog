@@ -8,10 +8,12 @@ export const instant = false;
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ date?: string }>;
 }
 
-export default async function TaskDetailPage({ params }: PageProps) {
+export default async function TaskDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { date } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -98,6 +100,9 @@ export default async function TaskDetailPage({ params }: PageProps) {
   const checklist = Array.isArray(task?.checklist) ? task.checklist : [];
   const completedItems = Array.isArray(log.checklist_completed) ? log.checklist_completed : [];
 
+  const backDate = date || log.work_date;
+  const backHref = backDate ? `/my-tasks?date=${backDate}` : "/my-tasks";
+
   return (
     <div className="min-h-screen bg-zinc-100/70 pb-16">
       <WorkerHeader
@@ -109,7 +114,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
       <main className="max-w-xl mx-auto px-4 pt-4 space-y-4">
         {/* 상단 뒤로가기 */}
         <Link
-          href="/my-tasks"
+          href={backHref}
           className="inline-flex items-center text-xs font-semibold text-zinc-500 hover:text-zinc-800"
         >
           <svg
@@ -125,7 +130,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          오늘의 작업 목록
+          작업 목록으로 돌아가기
         </Link>
 
         {/* 작업 헤더 카드 */}
@@ -183,6 +188,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
           initialCompletedItems={completedItems}
           initialNote={log.note}
           initialPhotos={photoItems}
+          returnDate={backDate}
         />
       </main>
     </div>

@@ -24,6 +24,7 @@ interface TaskDetailFormProps {
   initialCompletedItems: string[];
   initialNote: string | null;
   initialPhotos: PhotoItem[];
+  returnDate?: string;
 }
 
 export function TaskDetailForm({
@@ -33,6 +34,7 @@ export function TaskDetailForm({
   initialCompletedItems,
   initialNote,
   initialPhotos,
+  returnDate,
 }: TaskDetailFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -125,7 +127,7 @@ export function TaskDetailForm({
         if (markCompleted) {
           setStatus("COMPLETED");
           alert("작업이 성공적으로 완료되었습니다!");
-          router.push("/my-tasks");
+          router.push(returnDate ? `/my-tasks?date=${returnDate}` : "/my-tasks");
         } else {
           alert("작업 진행 내용이 저장되었습니다.");
         }

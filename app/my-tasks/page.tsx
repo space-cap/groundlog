@@ -2,11 +2,25 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { WorkerHeader } from "@/components/WorkerHeader";
-import { getKoreanToday, formatKoreanDate, formatKoreanTime } from "@/lib/date";
+import { TaskDateNavigator } from "@/components/my-tasks/TaskDateNavigator";
+import {
+  getKoreanToday,
+  formatKoreanDate,
+  formatKoreanTime,
+  getPreviousDate,
+  getNextDate,
+  isTodayKorean,
+  isFutureDate,
+} from "@/lib/date";
 
 export const instant = false;
 
-export default async function MyTasksPage() {
+interface PageProps {
+  searchParams: Promise<{ date?: string }>;
+}
+
+export default async function MyTasksPage({ searchParams }: PageProps) {
+  const { date } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -27,16 +41,25 @@ export default async function MyTasksPage() {
     redirect("/login");
   }
 
+  // 1. 기준 일자 판별 (한국 표준시 기준 및 미래 날짜 유입 방지)
   const todayStr = getKoreanToday();
-  const dateFormatted = formatKoreanDate();
+  const requestedDate = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null;
+  const isTargetFuture = requestedDate ? isFutureDate(requestedDate) : false;
+  const targetDate = requestedDate && !isTargetFuture ? requestedDate : todayStr;
+  const isToday = isTodayKorean(targetDate);
 
-  // 1. 당일 작업 로그 On-demand Lazy Creation 실행
-  await supabase.rpc("generate_daily_task_logs", {
-    p_company_id: profile.company_id,
-    p_work_date: todayStr,
-  });
+  const prevDate = getPreviousDate(targetDate);
+  const nextDate = getNextDate(targetDate);
 
-  // 2. 오늘 날짜의 작업 로그 목록 조회
+  // 2. 오늘 날짜일 때만 당일 작업 로그 On-demand Lazy Creation 실행
+  if (isToday) {
+    await supabase.rpc("generate_daily_task_logs", {
+      p_company_id: profile.company_id,
+      p_work_date: todayStr,
+    });
+  }
+
+  // 3. 해당 날짜의 작업 로그 목록 조회
   let query = supabase
     .from("task_logs")
     .select(`
@@ -63,7 +86,7 @@ export default async function MyTasksPage() {
       )
     `)
     .eq("company_id", profile.company_id)
-    .eq("work_date", todayStr);
+    .eq("work_date", targetDate);
 
   // 일반 직원은 본인 배정 작업이거나 본인 현장 작업 위주로 필터링
   if (profile.role === "WORKER") {
@@ -87,11 +110,10 @@ export default async function MyTasksPage() {
         siteName={siteObj?.name}
       />
 
-      <main className="max-w-xl mx-auto px-4 pt-5 space-y-5">
-        {/* 오늘 일자 및 진행률 카드 */}
-        <div className="rounded-2xl bg-white p-5 shadow-xs border border-zinc-200/80 space-y-4">
-          {/* 사용자 환영 배너 */}
-          <div className="flex items-center justify-between pb-3.5 border-b border-zinc-100">
+      <main className="max-w-xl mx-auto px-4 pt-4 space-y-4">
+        {/* 사용자 환영 & 소속 현장 카드 */}
+        <div className="rounded-2xl bg-white p-4 shadow-xs border border-zinc-200/80">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-xs shadow-xs">
                 {profile.name ? profile.name.slice(-2) : "직원"}
@@ -109,14 +131,26 @@ export default async function MyTasksPage() {
               {profile.role === "WORKER" ? "현장 실무자" : profile.role === "MANAGER" ? "현장 관리자" : "총괄 관리자"}
             </span>
           </div>
+        </div>
 
+        {/* 날짜 선택 네비게이터 (이전 날 / 다음 날) */}
+        <TaskDateNavigator
+          currentDate={targetDate}
+          todayStr={todayStr}
+          prevDate={prevDate}
+          nextDate={nextDate}
+          isToday={isToday}
+        />
+
+        {/* 당일 작업 요약 및 진행률 카드 */}
+        <div className="rounded-2xl bg-white p-5 shadow-xs border border-zinc-200/80 space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-                오늘의 할 일
+                {isToday ? "오늘의 작업 현황" : "해당 일자 작업 현황"}
               </span>
-              <h1 className="text-xl font-bold text-zinc-900 mt-0.5">
-                {dateFormatted}
+              <h1 className="text-lg font-bold text-zinc-900 mt-0.5">
+                {isToday ? "진행 상황" : `${targetDate} 작업 기록`}
               </h1>
             </div>
             <div className="text-right">
@@ -141,18 +175,29 @@ export default async function MyTasksPage() {
 
         {/* 작업 카드 목록 */}
         <div className="space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 px-1">
-            작업 목록 ({totalCount}건)
-          </h2>
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+              작업 목록 ({totalCount}건)
+            </h2>
+            {!isToday && (
+              <span className="text-[11px] font-medium text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded-md">
+                과거 내역 조회 모드
+              </span>
+            )}
+          </div>
 
           {totalCount === 0 ? (
             <div className="rounded-2xl bg-white p-10 text-center text-sm text-zinc-500 border border-zinc-200">
-              <p className="text-3xl mb-3">🎉</p>
+              <p className="text-3xl mb-3">📭</p>
               <p className="font-semibold text-zinc-800">
-                오늘 배정된 작업이 없습니다!
+                {isToday
+                  ? "오늘 배정된 작업이 없습니다!"
+                  : `${targetDate}에 배정된 작업 내역이 없습니다.`}
               </p>
               <p className="text-xs text-zinc-400 mt-1">
-                관리자가 작업을 새로 등록하면 자동으로 여기에 표시됩니다.
+                {isToday
+                  ? "관리자가 작업을 새로 등록하면 자동으로 여기에 표시됩니다."
+                  : "다른 날짜를 확인하시려면 상단 화살표를 눌러 이동해 보세요."}
               </p>
             </div>
           ) : (
@@ -176,7 +221,7 @@ export default async function MyTasksPage() {
               return (
                 <Link
                   key={log.id}
-                  href={`/my-tasks/${log.id}`}
+                  href={`/my-tasks/${log.id}?date=${targetDate}`}
                   className="block rounded-2xl bg-white p-4 shadow-xs border border-zinc-200/80 hover:border-blue-400 transition-all active:scale-[0.99]"
                 >
                   <div className="flex items-start justify-between gap-3">
