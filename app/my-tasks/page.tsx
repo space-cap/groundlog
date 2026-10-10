@@ -93,7 +93,27 @@ export default async function MyTasksPage() {
 
       <main className="max-w-xl mx-auto px-4 pt-5 space-y-5">
         {/* 오늘 일자 및 진행률 카드 */}
-        <div className="rounded-2xl bg-white p-5 shadow-xs border border-zinc-200/80">
+        <div className="rounded-2xl bg-white p-5 shadow-xs border border-zinc-200/80 space-y-4">
+          {/* 사용자 환영 배너 */}
+          <div className="flex items-center justify-between pb-3.5 border-b border-zinc-100">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-xs shadow-xs">
+                {profile.name ? profile.name.slice(-2) : "직원"}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-zinc-900 leading-tight truncate">
+                  안녕하세요, <span className="text-blue-600">{profile.name || "직원"}</span> 님! 👋
+                </p>
+                <p className="text-[11px] text-zinc-500 mt-0.5 truncate">
+                  {siteObj?.name ? `🏢 ${siteObj.name} 담당` : "배정된 현장 업무를 확인해 주세요"}
+                </p>
+              </div>
+            </div>
+            <span className="shrink-0 text-[11px] font-semibold text-zinc-600 bg-zinc-100 px-2.5 py-1 rounded-full">
+              {profile.role === "WORKER" ? "현장 실무자" : profile.role === "MANAGER" ? "현장 관리자" : "총괄 관리자"}
+            </span>
+          </div>
+
           <div className="flex items-center justify-between">
             <div>
               <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
@@ -115,7 +135,7 @@ export default async function MyTasksPage() {
           </div>
 
           {/* 진행 바 */}
-          <div className="mt-4 w-full bg-zinc-100 rounded-full h-3 overflow-hidden">
+          <div className="w-full bg-zinc-100 rounded-full h-3 overflow-hidden">
             <div
               className="bg-emerald-500 h-3 rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}

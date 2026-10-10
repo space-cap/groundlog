@@ -129,29 +129,38 @@ export default async function TaskDetailPage({ params }: PageProps) {
         </Link>
 
         {/* 작업 헤더 카드 */}
-        <div className="rounded-2xl bg-white p-5 shadow-xs border border-zinc-200/80 space-y-2">
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
-                log.status === "COMPLETED"
-                  ? "bg-emerald-100 text-emerald-800"
+        <div className="rounded-2xl bg-white p-5 shadow-xs border border-zinc-200/80 space-y-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
+                  log.status === "COMPLETED"
+                    ? "bg-emerald-100 text-emerald-800"
+                    : log.status === "IN_PROGRESS"
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-zinc-100 text-zinc-600"
+                }`}
+              >
+                {log.status === "COMPLETED"
+                  ? "🟢 완료됨"
                   : log.status === "IN_PROGRESS"
-                    ? "bg-amber-100 text-amber-800"
-                    : "bg-zinc-100 text-zinc-600"
-              }`}
-            >
-              {log.status === "COMPLETED"
-                ? "🟢 완료됨"
-                : log.status === "IN_PROGRESS"
-                  ? "🟡 진행중"
-                  : "⚪ 대기중"}
-            </span>
-
-            {task?.sites?.name && (
-              <span className="text-xs text-zinc-500">
-                🏢 {task.sites.name}
+                    ? "🟡 진행중"
+                    : "⚪ 대기중"}
               </span>
-            )}
+
+              {task?.sites?.name && (
+                <span className="text-xs text-zinc-500 font-medium">
+                  🏢 {task.sites.name}
+                </span>
+              )}
+            </div>
+
+            {/* 작업자 정보 뱃지 */}
+            <div className="flex items-center gap-1.5 text-xs text-zinc-600 bg-zinc-50 border border-zinc-200/70 px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>작업자:</span>
+              <strong className="text-zinc-900 font-bold">{profile.name || "미지정"}</strong>
+            </div>
           </div>
 
           <h1 className="text-xl font-black text-zinc-900">
@@ -159,7 +168,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
           </h1>
 
           {task?.description && (
-            <div className="mt-2 p-3 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-900 leading-relaxed">
+            <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-900 leading-relaxed">
               <span className="font-bold">📋 작업 지침: </span>
               {task.description}
             </div>
