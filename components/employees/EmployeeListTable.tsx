@@ -14,6 +14,7 @@ export interface EmployeeItem {
   name: string;
   email: string;
   role: "ADMIN" | "MANAGER" | "WORKER";
+  shift_type?: "DAY" | "NIGHT" | "ROTATING";
   phone: string | null;
   site_id: string | null;
   created_at: string;
@@ -167,21 +168,40 @@ export function EmployeeListTable({
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                            emp.role === "ADMIN"
-                              ? "bg-zinc-900 text-white"
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                              emp.role === "ADMIN"
+                                ? "bg-zinc-900 text-white"
+                                : emp.role === "MANAGER"
+                                  ? "bg-purple-100 text-purple-700"
+                                  : "bg-zinc-100 text-zinc-700"
+                            }`}
+                          >
+                            {emp.role === "ADMIN"
+                              ? "최고 관리자"
                               : emp.role === "MANAGER"
-                                ? "bg-purple-100 text-purple-700"
-                                : "bg-zinc-100 text-zinc-700"
-                          }`}
-                        >
-                          {emp.role === "ADMIN"
-                            ? "최고 관리자"
-                            : emp.role === "MANAGER"
-                              ? "현장 관리자"
-                              : "현장 실무자"}
-                        </span>
+                                ? "현장 관리자"
+                                : "현장 실무자"}
+                          </span>
+                          {emp.shift_type && (
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                                emp.shift_type === "NIGHT"
+                                  ? "bg-indigo-100 text-indigo-700 border border-indigo-200/60"
+                                  : emp.shift_type === "ROTATING"
+                                    ? "bg-amber-100 text-amber-700 border border-amber-200/60"
+                                    : "bg-blue-50 text-blue-700 border border-blue-200/60"
+                              }`}
+                            >
+                              {emp.shift_type === "NIGHT"
+                                ? "🌙 야간/당직"
+                                : emp.shift_type === "ROTATING"
+                                  ? "🔄 24h 교대"
+                                  : "☀️ 주간"}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">

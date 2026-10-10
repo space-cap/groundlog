@@ -69,24 +69,24 @@ export function CreateEmployeeModal({ sites }: CreateEmployeeModalProps) {
             )}
 
             <form action={formAction} className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-xs font-semibold text-zinc-700 uppercase"
-                  >
-                    이름 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    required
-                    placeholder="예: 홍길동"
-                    className="mt-1.5 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-                  />
-                </div>
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-xs font-semibold text-zinc-700 uppercase"
+                >
+                  이름 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  required
+                  placeholder="예: 홍길동"
+                  className="mt-1.5 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                />
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label
                     htmlFor="role"
@@ -103,6 +103,26 @@ export function CreateEmployeeModal({ sites }: CreateEmployeeModalProps) {
                   >
                     <option value="WORKER">현장 실무자 (WORKER)</option>
                     <option value="MANAGER">현장 관리자 / 팀장 (MANAGER)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="shift_type"
+                    className="block text-xs font-semibold text-zinc-700 uppercase"
+                  >
+                    근무 형태 <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="shift_type"
+                    name="shift_type"
+                    required
+                    defaultValue="DAY"
+                    className="mt-1.5 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 bg-white font-medium text-zinc-800"
+                  >
+                    <option value="DAY">☀️ 주간 근무 (일반 주간)</option>
+                    <option value="NIGHT">🌙 야간 / 당직 (자정 넘김)</option>
+                    <option value="ROTATING">🔄 24시간 교대 (격일제)</option>
                   </select>
                 </div>
               </div>

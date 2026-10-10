@@ -7,6 +7,7 @@ export type Json =
   | Json[];
 
 export type UserRole = "ADMIN" | "MANAGER" | "WORKER";
+export type ShiftType = "DAY" | "NIGHT" | "ROTATING";
 export type TaskRepeatType = "NONE" | "DAILY" | "WEEKLY";
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "COMPLETED";
 export type HandoverStatus = "OPEN" | "RESOLVED";
@@ -65,6 +66,7 @@ export interface Database {
           name: string;
           email: string;
           role: UserRole;
+          shift_type: ShiftType;
           phone: string | null;
           created_at: string;
         };
@@ -75,6 +77,7 @@ export interface Database {
           name: string;
           email: string;
           role: UserRole;
+          shift_type?: ShiftType;
           phone?: string | null;
           created_at?: string;
         };
@@ -85,6 +88,7 @@ export interface Database {
           name?: string;
           email?: string;
           role?: UserRole;
+          shift_type?: ShiftType;
           phone?: string | null;
           created_at?: string;
         };
@@ -257,6 +261,7 @@ export interface Database {
           p_role: string;
           p_site_id?: string | null;
           p_phone?: string | null;
+          p_shift_type?: string;
         };
         Returns: string;
       };

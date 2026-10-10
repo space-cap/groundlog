@@ -142,3 +142,16 @@ export function isFutureDate(dateStr: string): boolean {
   return dateStr > getKoreanToday();
 }
 
+/**
+ * 현재 한국 표준시 기준의 시각(0~23)을 숫자로 반환합니다.
+ * (야간 당직 교대 시각 판별용: 오전 10시 이전인지 확인)
+ */
+export function getKoreanHour(date: Date = new Date()): number {
+  const hourStr = new Intl.DateTimeFormat("en-US", {
+    timeZone: KOREA_TZ,
+    hour: "numeric",
+    hour12: false,
+  }).format(date);
+  return parseInt(hourStr, 10);
+}
+

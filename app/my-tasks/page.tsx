@@ -11,6 +11,7 @@ import {
   getNextDate,
   isTodayKorean,
   isFutureDate,
+  getKoreanHour,
 } from "@/lib/date";
 
 export const instant = false;
@@ -33,7 +34,7 @@ export default async function MyTasksPage({ searchParams }: PageProps) {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("id, company_id, site_id, role, name, sites:site_id(name)")
+    .select("id, company_id, site_id, role, name, shift_type, sites:site_id(name)")
     .eq("id", user.id)
     .single();
 
@@ -41,11 +42,20 @@ export default async function MyTasksPage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
-  // 1. 기준 일자 판별 (한국 표준시 기준 및 미래 날짜 유입 방지)
+  // 1. 기준 일자 판별 (한국 표준시 기준 및 야간 당직 자정 넘김 스마트 자동화)
   const todayStr = getKoreanToday();
+  const currentHour = getKoreanHour();
+  const userShiftType = (profile as { shift_type?: "DAY" | "NIGHT" | "ROTATING" }).shift_type || "DAY";
+  const isNightShiftWorker = userShiftType === "NIGHT" || userShiftType === "ROTATING";
+
+  // 야간/당직자이고 오전 10시 이전(00:00~09:59)이며 URL에 별도 date 파라미터가 없는 경우:
+  // 출근일인 '어제 날짜'의 당직 작업을 기본 화면으로 자동 지정
+  const isAutoNightShiftMode = !date && isNightShiftWorker && currentHour < 10;
+  const defaultDate = isAutoNightShiftMode ? getPreviousDate(todayStr) : todayStr;
+
   const requestedDate = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null;
   const isTargetFuture = requestedDate ? isFutureDate(requestedDate) : false;
-  const targetDate = requestedDate && !isTargetFuture ? requestedDate : todayStr;
+  const targetDate = requestedDate && !isTargetFuture ? requestedDate : defaultDate;
   const isToday = isTodayKorean(targetDate);
 
   const prevDate = getPreviousDate(targetDate);
@@ -127,11 +137,45 @@ export default async function MyTasksPage({ searchParams }: PageProps) {
                 </p>
               </div>
             </div>
-            <span className="shrink-0 text-[11px] font-semibold text-zinc-600 bg-zinc-100 px-2.5 py-1 rounded-full">
-              {profile.role === "WORKER" ? "현장 실무자" : profile.role === "MANAGER" ? "현장 관리자" : "총괄 관리자"}
-            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                userShiftType === "NIGHT"
+                  ? "bg-indigo-100 text-indigo-700"
+                  : userShiftType === "ROTATING"
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-blue-50 text-blue-700"
+              }`}>
+                {userShiftType === "NIGHT" ? "🌙 야간/당직" : userShiftType === "ROTATING" ? "🔄 교대" : "☀️ 주간"}
+              </span>
+              <span className="text-[11px] font-semibold text-zinc-600 bg-zinc-100 px-2 py-0.5 rounded-full">
+                {profile.role === "WORKER" ? "실무자" : profile.role === "MANAGER" ? "관리자" : "총괄"}
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* 야간 당직 자동 모드 활성화 시 눈에 띄는 안내 배너 */}
+        {isAutoNightShiftMode && (
+          <div className="rounded-2xl bg-gradient-to-r from-indigo-900 to-indigo-800 text-white p-4 shadow-sm flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="text-2xl shrink-0">🌙</span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold leading-tight">
+                  야간 당직 연속 근무 모드
+                </p>
+                <p className="text-[11px] text-indigo-200 mt-0.5 truncate">
+                  출근일({targetDate}) 당직 작업을 이어서 진행 중입니다.
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/my-tasks?date=${todayStr}`}
+              className="shrink-0 text-xs font-bold bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-xl transition-colors active:scale-95 whitespace-nowrap"
+            >
+              오늘 날짜 보기 ➔
+            </Link>
+          </div>
+        )}
 
         {/* 날짜 선택 네비게이터 (이전 날 / 다음 날) */}
         <TaskDateNavigator

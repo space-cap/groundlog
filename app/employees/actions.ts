@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import type { ShiftType } from "@/types/database";
 
 export interface EmployeeActionState {
   error?: string;
@@ -19,6 +20,7 @@ export async function createEmployeeAction(
   const email = formData.get("email")?.toString().trim();
   const password = formData.get("password")?.toString();
   const role = formData.get("role")?.toString();
+  const shiftType = (formData.get("shift_type")?.toString() || "DAY") as ShiftType;
   const siteId = formData.get("site_id")?.toString() || null;
   const phone = formData.get("phone")?.toString().trim() || null;
 
@@ -49,6 +51,7 @@ export async function createEmployeeAction(
       p_role: role,
       p_site_id: siteId,
       p_phone: phone,
+      p_shift_type: shiftType,
     },
   );
 
@@ -73,6 +76,7 @@ export async function updateEmployeeAction(
 ): Promise<EmployeeActionState> {
   const name = formData.get("name")?.toString().trim();
   const role = formData.get("role")?.toString() as "MANAGER" | "WORKER" | undefined;
+  const shiftType = (formData.get("shift_type")?.toString() || "DAY") as ShiftType;
   const siteId = formData.get("site_id")?.toString() || null;
   const phone = formData.get("phone")?.toString().trim() || null;
 
@@ -109,6 +113,7 @@ export async function updateEmployeeAction(
       name,
       role,
       site_id: siteId,
+      shift_type: shiftType,
       phone,
     })
     .eq("id", userId)
